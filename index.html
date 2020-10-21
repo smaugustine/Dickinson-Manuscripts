@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manuscript Collection of Augustine Dickinson</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.1/css/bulma.min.css" integrity="sha512-ZRv40llEogRmoWgZwnsqke3HNzJ0kiI0+pcMgiz2bxO6Ew1DVBtWjVn0qjrXdT3+u+pSN36gLgmJiiQ3cQtyzA==" crossorigin="anonymous" />
+    <style>
+    </style>
+  </head>
+
+  <body>
+    <section id="ms-list" class="section">
+      <div class="container">
+        <h1 class="title is-2">Manuscripts</h1>
+        <h2 class="subtitle is-4">Collected by Augustine Dickinson</h2>
+
+        <div class="box">
+          <div class="content">
+            <p class="title is-4">Go to manuscript:</p>
+            <ul>
+              <li>
+                <strong>Ethiopic:</strong>
+                <ul id="Et"></ul>
+              </li>
+              <li>
+                <strong>Latin:</strong>
+                <ul id="Lat"></ul>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer id="footer" class="footer">
+      <div class="content">
+        <p>
+          <strong>&copy;2020 Augustine Dickinson</strong>. <a href="https://github.com/smaugustine/Manuscripts" target="_blank">Source</a>.
+        </p>
+        <p>
+          The contents of this page are made available under a <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank"><abbr title="Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</abbr> license</a>.
+        </p>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+    <script>
+      $(document).ready(function(){
+
+        var xsltProcessor = new XSLTProcessor();
+        var xmlRequest = new XMLHttpRequest();
+
+        xmlRequest.open("GET", "style.xsl", false);
+        xmlRequest.send(null);
+        xslStylesheet = xmlRequest.responseXML;
+        xsltProcessor.importStylesheet(xslStylesheet);
+
+        const mss = ['Et. 001', 'Et. 003', 'Lat. Add. 002'];
+        
+        mss.forEach(manuscript => {
+          manuscriptSlug = manuscript.replace(/(\s|\.)+/g, '');
+          manuscriptGroup = manuscript.substr(0, manuscript.indexOf('.')); 
+
+          $('#'+manuscriptGroup).append(
+            $('<li/>').append(
+              $('<a/>').attr('href', '#'+manuscriptSlug).text(manuscript)
+            )
+          );
+          
+          $('<section class="section"/>').attr('id', manuscriptSlug).append(
+            $('<div class="container"/>')
+          ).insertBefore('#footer');
+
+          xmlRequest.open("GET", "/xml/"+manuscriptSlug+".xml", false);
+          xmlRequest.send(null);
+          xmlRaw = xmlRequest.responseText;
+
+          xmlRaw = xmlRaw.replace(/\n\s+/g, '');
+
+          var domParser = new DOMParser()
+          var xmlDoc = domParser.parseFromString(xmlRaw, 'text/xml');
+          
+          $('#'+manuscriptSlug+' .container').html(xsltProcessor.transformToFragment(xmlDoc, document));
+        });
+
+        $(document).on('click', 'span a[data-for]', function(){
+          $("ol[id='"+$(this).attr('data-for')+"']").slideToggle(function(){
+            if($(this).is(":hidden")) {
+              $("a[data-for='"+$(this).attr('id')+"']").text(' [Expand]');
+            }
+            else {
+              $("a[data-for='"+$(this).attr('id')+"']").text(' [Collapse]');
+            }
+          });
+        });
+
+        $(document).on('click', 'li a[data-tab]', function(){
+          $("a[data-ms='"+$(this).attr('data-ms')+"']").parent().removeClass("is-active");
+          $(this).parent().addClass("is-active");
+
+          $("div[id^='"+$(this).attr('data-ms')+"']").addClass('is-hidden');
+          $("div#"+$(this).attr('data-ms')+"-"+$(this).attr('data-tab')).removeClass('is-hidden');
+        });
+
+      });
+    </script>
+  </body>
+</html>
