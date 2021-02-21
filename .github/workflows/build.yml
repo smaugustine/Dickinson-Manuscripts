@@ -1,4 +1,4 @@
-name: Build
+name: XML to YAML
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
 
       - uses: DamianReeves/write-file-action@v1.0
         with:
-          path: ${{ env.home}}/_manuscripts/
+          path: ${{ env.home}}/_manuscripts/test.md
           contents: |
             echo "---"
           write-mode: overwrite
