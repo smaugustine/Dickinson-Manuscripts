@@ -3,40 +3,47 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Manuscript Collection of Augustine Dickinson</title>
+    <title>Augustine Dickinson Manuscripts</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.1/css/bulma.min.css" integrity="sha512-ZRv40llEogRmoWgZwnsqke3HNzJ0kiI0+pcMgiz2bxO6Ew1DVBtWjVn0qjrXdT3+u+pSN36gLgmJiiQ3cQtyzA==" crossorigin="anonymous" />
     <style>
     </style>
   </head>
 
   <body>
-    <section id="ms-list" class="section">
+    <section class="section">
       <div class="container">
+        
         <h1 class="title is-2">Manuscripts</h1>
         <h2 class="subtitle is-4">Collected by Augustine Dickinson</h2>
-
-        <div class="box">
-          <div class="content">
-            <p class="title is-4">Go to manuscript:</p>
-            <ul>
-              <li>
-                <strong>Ethiopic:</strong>
-                <ul id="Et"></ul>
-              </li>
-              <li>
-                <strong>Latin:</strong>
-                <ul id="Lat"></ul>
-              </li>
-            </ul>
+        
+        <div class="columns">
+          
+          <div class="column is-3-desktop is-4-tablet">
+            <aside class="menu box">
+              <p class="menu-label">Ethiopic</p>
+              <ul id="Et-mss" class="menu-list"></ul>
+              <p class="menu-label">Ethiopic (Additional)</p>
+              <ul id="EtAdd-mss" class="menu-list"></ul>
+              <p class="menu-label">Latin (Additional)</p>
+              <ul id="LatAdd-mss" class="menu-list"></ul>
+              <p class="menu-label">Oriental (Additional)</p>
+              <ul id="OrAdd-mss" class="menu-list"></ul>
+            </aside>
           </div>
-        </div>
+          
+          <div class="column">
+            <article id="ms-data"></article>
+          </div>
+          
+        </div>  
+        
       </div>
-    </section>
+    </section>      
 
-    <footer id="footer" class="footer">
+    <footer class="footer">
       <div class="content">
         <p>
-          <strong>&copy;2020 Augustine Dickinson</strong>. <a href="https://github.com/smaugustine/Manuscripts" target="_blank">Source</a>.
+          <strong>&copy;2021 Augustine Dickinson</strong>. <a href="https://github.com/smaugustine/Manuscripts" target="_blank">Source</a>.
         </p>
         <p>
           The contents of this page are made available under a <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank"><abbr title="Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International">CC BY-NC-SA 4.0</abbr> license</a>.
@@ -44,66 +51,65 @@
       </div>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-signals/1.0.0/js-signals.min.js" integrity="sha512-ijOBjYzQBf0Nl9+yA2fkdgBSUQBs9+Jn7V8Rw6eflJZY6cKfKkt7W0vuLpGsnVqJaFYJEwcZWUxA1YLS1EN03g==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hasher/1.2.0/hasher.min.js" integrity="sha512-RT3O+Xx6ft22ERX/QF1dhupQAhEE/OtLfAIixQMvgeCryHt7QrovkBXVLTDYKMxkEWGaEgmCDjTQ7Rfk9AMH8w==" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/rest.js/15.2.6/octokit-rest.min.js" integrity="sha512-uiSucQ5TdEImoU68Gp+mxXJ54l4lQm5bTd+T0tj7KcCupCDrKr+FdmgXipF+2Exfc6xDAcnPbr5rXB5bEZS0bw==" crossorigin="anonymous"></script>
+    
     <script>
-      $(document).ready(function(){
-
-        var xsltProcessor = new XSLTProcessor();
-        var xmlRequest = new XMLHttpRequest();
-
-        xmlRequest.open("GET", "style.xsl", false);
-        xmlRequest.send(null);
-        xslStylesheet = xmlRequest.responseXML;
-        xsltProcessor.importStylesheet(xslStylesheet);
-
-        const mss = ['Et. 001', 'Et. 003', 'Lat. Add. 002'];
+    const GitHub = new Octokit();
+    
+    const xsltProcessor = new XSLTProcessor();
+    $.ajax({url: 'style.xsl', success: function(result){
+      xsltProcessor.importStylesheet(result);
+    }});
+    
+    $(document).ready(function(){
+    
+      GitHub.repos.getContent({
+        owner: 'smaugustine',
+        repo: 'Manuscripts',
+        branch: 'master',
+        path: 'xml'
+      }).then(({ data }) => {
         
-        mss.forEach(manuscript => {
-          manuscriptSlug = manuscript.replace(/(\s|\.)+/g, '');
-          manuscriptGroup = manuscript.substr(0, manuscript.indexOf('.')); 
-
-          $('#'+manuscriptGroup).append(
-            $('<li/>').append(
-              $('<a/>').attr('href', '#'+manuscriptSlug).text(manuscript)
+        data.forEach((file, i) => {
+          file.name = file.name.slice(0, -4);
+          var collection = file.name.replace(/[0-9]/g, '');
+          var shelfmark = file.name.replace(/([a-z])([A-Z0-9])/g, "$1. $2");
+          
+          $('ul#'+collection+'-mss').append(
+            $('<li>').append(
+              $('<a>').attr('href', '#'+file.name).text(shelfmark)
             )
           );
-          
-          $('<section class="section"/>').attr('id', manuscriptSlug).append(
-            $('<div class="container"/>')
-          ).insertBefore('#footer');
-
-          xmlRequest.open("GET", "/xml/"+manuscriptSlug+".xml", false);
-          xmlRequest.send(null);
-          xmlRaw = xmlRequest.responseText;
-
-          xmlRaw = xmlRaw.replace(/\n\s+/g, '');
-
-          var domParser = new DOMParser()
-          var xmlDoc = domParser.parseFromString(xmlRaw, 'text/xml');
-          
-          $('#'+manuscriptSlug+' .container').html(xsltProcessor.transformToFragment(xmlDoc, document));
         });
-
-        $(document).on('click', 'span a[data-for]', function(){
-          $("ol[id='"+$(this).attr('data-for')+"']").slideToggle(function(){
-            if($(this).is(":hidden")) {
-              $("a[data-for='"+$(this).attr('id')+"']").text(' [Expand]');
-            }
-            else {
-              $("a[data-for='"+$(this).attr('id')+"']").text(' [Collapse]');
-            }
-          });
-        });
-
-        $(document).on('click', 'li a[data-tab]', function(){
-          $("a[data-ms='"+$(this).attr('data-ms')+"']").parent().removeClass("is-active");
-          $(this).parent().addClass("is-active");
-
-          $("div[id^='"+$(this).attr('data-ms')+"']").addClass('is-hidden');
-          $("div#"+$(this).attr('data-ms')+"-"+$(this).attr('data-tab')).removeClass('is-hidden');
-        });
-
+        
+      }).catch(err => {
+        console.log(err);
       });
+      
+      function routerFunction(newHash, oldHash){
+        if(newHash){
+          
+          $.ajax({
+            url: 'xml/'+newHash+'.xml'
+          }).done(result => {
+            $('article#ms-data').html(xsltProcessor.transformToFragment(result, document));
+          }).catch(err => {
+            console.log(err);
+            $('article#ms-data').html('<div class="notification is-danger">'+err.status+': '+err.statusText+'</div>');
+          });
+          
+        }
+      }
+      
+      hasher.changed.add(routerFunction);
+      hasher.initialized.add(routerFunction);
+      hasher.init();
+      
+    });
     </script>
+    
   </body>
 </html>
